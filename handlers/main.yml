@@ -1,0 +1,21 @@
+---
+# handlers file for ansible-role-samba
+- name: restart smb
+  service:
+    name: smb
+    state: restarted
+  notify: Check if /var/www/html exists
+
+- name: Check if /var/www/html exists
+  stat: path=/var/www/html
+  register: var_www_html
+  notify: Update file permission on /var/www/html
+
+- name: Update file permission on /var/www/html
+  file: path=/var/www/html mode=0777
+  when: var_www_html.stat.exists == True
+  notify: Update ACL on /var/www/html
+
+- name: Update ACL on /var/www/html
+  shell: setfacl -R -m d:u::rwx,u::rwx,d:g::rwx,g::rwx,d:o::rwx,o::rwx,d:m::rwx,m::rwx,u:apache:rwx /var/www/html
+  when: var_www_html.stat.exists == True
